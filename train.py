@@ -98,6 +98,8 @@ for i in str(opt).split():
 F.close()
 f.close()
 
+## GPU Initialization
+
 if opt.cuda and not torch.cuda.is_available():
     raise Exception("No GPU found, please run without --cuda")
 cudnn.benchmark = True
@@ -105,6 +107,7 @@ cudnn.benchmark = True
 gpus = [gpu for gpu in range(opt.gpuSet)]
 torch.cuda.set_device(gpus[0])
 
+## Data Initialization
 if opt.model == 'PanColorGAN':
     train_set = PanColorDataset(mode='train', dataset=opt.dataset, random_downsampling=opt.useRD)
     test_set = PanColorDataset(mode='test', dataset=opt.dataset)
