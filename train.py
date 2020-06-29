@@ -121,9 +121,22 @@ testing_data_loader = DataLoader(
     dataset=test_set,num_workers=opt.threads, batch_size=opt.batchSize, shuffle=False)
 
 
-## Start from beginning or continue from a checkpoint
 
+## Define Network
 netG = define_G(opt.input_nc, opt.output_nc,
                     opt.ngf, 'batch','leakyrelu', opt.useDropout, opt.upConvType, opt.gtype, opt.blockType, opt.nblocks, gpus, n_downsampling=opt.ndowns)
 netD = define_D(opt.input_nc + opt.output_nc,
                     opt.ndf, 'batch', not opt.lsgan, opt.nlayers, gpus)
+
+## Define Losses
+criterionGAN = GANLoss(use_lsgan=opt.lsgan)
+criterionL1 = nn.L1Loss()
+criterionMSE = nn.MSELoss()
+
+## Define Optimizers
+optimizerG = optim.Adam(netG.parameters(), lr=opt.lr, betas=(
+    opt.beta1, 0.999), weight_decay=opt.regTerm)
+optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(
+    opt.beta1, 0.999), weight_decay=opt.regTerm)
+
+## Continue from a checkpoint
