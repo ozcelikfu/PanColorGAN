@@ -76,3 +76,42 @@ def get_activation_layer(activation_type):
     else:
         print('activation layer [%s] is not found' % activation_type)
     return activation_layer
+
+
+def define_G(input_nc, output_nc, ngf, norm='batch', activation='leakyrelu', use_dropout=False, upConvType='ConvT', net_type='fusenet', blockType="SE", n_blocks=9, gpu_ids=[], n_downsampling=3):
+    netG = None
+    use_gpu = True
+    norm_layer = get_norm_layer(norm_type=norm)
+    activation_layer = get_activation_layer(activation_type=activation)
+    if use_gpu:
+        assert(torch.cuda.is_available())
+    
+
+    netG = UnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, activation_layer=activation_layer,
+                                use_dropout=use_dropout, blockType=blockType, n_blocks=n_blocks, upConvType=upConvType,
+                                gpu_ids=gpu_ids, n_downsampling=3)
+
+
+    else:
+        raise NotImplementedError
+    if len(gpu_ids) > 0:
+        netG.cuda()
+    netG.apply(weights_init)
+    return netG
+
+
+def define_D(input_nc, ndf, norm='batch', use_sigmoid=False, n_layers=3, gpu_ids=[]):
+    netD = None
+    use_gpu = len(gpu_ids) > 0
+    norm_layer = get_norm_layer(norm_type=norm)
+
+    if use_gpu:
+        assert(torch.cuda.is_available())
+
+    netD = NLayerDiscriminator(
+        input_nc, ndf, n_layers=n_layers, norm_layer=norm_layer, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
+
+    if use_gpu:
+        netD.cuda()
+    netD.apply(weights_init)
+    return netD
