@@ -93,3 +93,7 @@ for i in str(opt).split():
     F.write(i + '\n')
 F.close()
 f.close()
+
+if opt.cuda and not torch.cuda.is_available():
+    raise Exception("No GPU found, please run without --cuda")
+cudnn.benchmark = True
