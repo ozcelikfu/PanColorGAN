@@ -1,25 +1,19 @@
 import argparse
 import os
-from math import log10
-import time
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from networks import define_G, define_D, GANLoss, print_network, get_conv, edge_loss
-from dataset import GrayMSDataset, GrayMSPreprocessedDataset
+from dataset import PanColorDataset, PanSRDataset
 import torch.backends.cudnn as cudnn
-import torchvision.utils as vutils
-from util import save_figure
-from torch.utils.data.sampler import RandomSampler
+from util import save_figure, visualize_tensor, avg_metric
 import numpy as np
 import matplotlib.pyplot as plt
 from metrics import sCC
 from metrics import ERGAS as ergas
 from metrics import sam2 as sam
-import pytorch_ssim
 
 import torch.multiprocessing
 torch.multiprocessing.set_sharing_strategy('file_system')
