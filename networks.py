@@ -160,3 +160,169 @@ class GANLoss(nn.Module):
     def __call__(self, input, target_is_real):
         target_tensor = self.get_target_tensor(input, target_is_real)
         return self.loss(input, target_tensor.cuda())
+
+    
+## Special UNet Designed for Pansharpening
+class UnetGenerator(nn.Module):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, activation_layer=nn.LeakyReLU(0.2, True),
+                 use_dropout=False, blockType="Resnet", n_blocks=6, upConvType='ConvT', gpu_ids=[], n_downsampling=3):
+        assert (n_blocks >= 0)
+        super(UnetGenerator, self).__init__()
+        self.input_nc = input_nc
+        self.output_nc = output_nc
+        self.ngf = ngf
+        self.gpu_ids = gpu_ids
+        self.blockType = blockType
+        if upConvType == 'ConvT':
+            upLayer = nn.ConvTranspose2d
+        elif upConvType == 'ResizeConv':
+            upLayer = InterpolatedConv2D
+        else:
+            raise NotImplementedError
+
+        color1 = [nn.Conv2d(self.input_nc-1, ngf, kernel_size=3, padding=1),
+                  norm_layer(ngf, affine=True),
+                  activation_layer,
+                  nn.Conv2d(ngf, ngf, kernel_size=3, padding=1),
+                  norm_layer(ngf, affine=True),
+                  activation_layer,
+                  ]
+
+        color2 = [nn.Conv2d(ngf, ngf * 2, kernel_size=3,
+                                stride=2, padding=1),
+                      norm_layer(ngf * 2, affine=True),
+                      activation_layer, ]
+        color3 = [nn.Conv2d(ngf * 2, ngf * 4, kernel_size=3,
+                            stride=2, padding=1),
+                  norm_layer(ngf * 4, affine=True),
+                  activation_layer, ]
+
+        model1 = [nn.Conv2d(1, ngf, kernel_size=3, padding=1),
+                    norm_layer(ngf, affine=True),
+                    activation_layer,
+                    nn.Conv2d(ngf, ngf, kernel_size=3, padding=1),
+                    norm_layer(ngf, affine=True),
+                    activation_layer,
+                    ]
+
+        model2 = [nn.Conv2d(ngf * 2, ngf * 2, kernel_size=3,
+                            stride=2, padding=1),
+                  norm_layer(ngf * 2, affine=True),
+                  activation_layer, ]
+
+        model3 = [nn.Conv2d(ngf * 4, ngf * 4, kernel_size=3,
+                            stride=2, padding=1),
+                  norm_layer(ngf * 4, affine=True),
+                  activation_layer, ]
+
+        model_resnet = []
+
+
+
+        for i in range(n_blocks):
+            model_resnet += [ResnetBlock(ngf * 8, 'zero',
+                                  norm_layer=norm_layer, use_dropout=use_dropout)]
+
+        model4 = [nn.Conv2d(ngf * 8, ngf * 4, kernel_size=3, padding=1),
+                  norm_layer(ngf * 4, affine=True),
+                  activation_layer, ]
+
+        model5 = [upLayer(ngf * 8, ngf * 4,
+                          kernel_size=3, stride=2,
+                          padding=1, output_padding=1) if upConvType == 'ConvT' else upLayer(ngf * 8, ngf * 4,
+                                                                                             kernel_size=3,
+                                                                                             stride=1, padding=1,
+                                                                                             scale_factor=2),
+                  norm_layer(ngf * 4, affine=True),
+                  activation_layer, ]
+
+        model6 = [nn.Conv2d(ngf*4, ngf * 2, kernel_size=3, padding=1),
+                  norm_layer(ngf*2, affine=True),
+                  activation_layer, ]
+        model7 = [upLayer(ngf * 4, ngf*2,
+                          kernel_size=3, stride=2,
+                          padding=1, output_padding=1) if upConvType == 'ConvT' else upLayer(ngf * 4, ngf*2,
+                                                                                             kernel_size=3,
+                                                                                             stride=1, padding=1,
+                                                                                             scale_factor=2),
+                  norm_layer(ngf*2, affine=True),
+                  activation_layer, ]
+        model8 = [nn.Conv2d(ngf*2, ngf, kernel_size=3, padding=1),
+                  norm_layer(ngf, affine=True),
+                  activation_layer, ]
+
+
+        model9 = [nn.Conv2d(ngf*2, ngf, kernel_size=3, padding=1),
+                      norm_layer(ngf, affine=True),
+                      activation_layer,
+                      nn.Conv2d(ngf, output_nc, kernel_size=3, padding=1),
+                      ]
+        out_model = [nn.Tanh()]
+
+        self.color1 = nn.Sequential(*color1)
+        self.color2 = nn.Sequential(*color2)
+        self.color3 = nn.Sequential(*color3)
+        self.model1 = nn.Sequential(*model1)
+        self.model2 = nn.Sequential(*model2)
+        self.model3 = nn.Sequential(*model3)
+        self.model_resnet = nn.Sequential(*model_resnet)
+        self.model4 = nn.Sequential(*model4)
+        self.model5 = nn.Sequential(*model5)
+        self.model6 = nn.Sequential(*model6)
+        self.model7 = nn.Sequential(*model7)
+        self.model8 = nn.Sequential(*model8)
+        self.model9 = nn.Sequential(*model9)
+        self.out_model = nn.Sequential(*out_model)
+
+    def forward(self, input):
+        #self.gpu_ids = None
+        self.gpu_ids = [0]
+        # print self.gpu_ids
+        #input_pan, input_ms = input[:, 4, :,
+        #                      :].unsqueeze(1), input[:, :4, :, :]
+        input_pan, input_ms = input[:, 3, :,
+                              :].unsqueeze(1), input[:, :3, :, :]
+        if self.gpu_ids and isinstance(input.data, torch.cuda.FloatTensor):
+            m1 = nn.parallel.data_parallel(self.model1, input_pan, self.gpu_ids)
+            c1 = nn.parallel.data_parallel(self.color1, input_ms, self.gpu_ids)
+            mc1 = torch.cat((m1, c1), dim=1)
+            m2 = nn.parallel.data_parallel(self.model2, mc1, self.gpu_ids)
+            c2 = nn.parallel.data_parallel(self.color2, c1, self.gpu_ids)
+            mc2 = torch.cat((m2, c2), dim=1)
+            m3 = nn.parallel.data_parallel(self.model3, mc2, self.gpu_ids)
+            c3 = nn.parallel.data_parallel(self.color3, c2, self.gpu_ids)
+            mc3 = torch.cat((m3, c3), dim=1)
+            res = nn.parallel.data_parallel(self.model_resnet, mc3, self.gpu_ids)
+            m4 = nn.parallel.data_parallel(self.model4, res, self.gpu_ids)
+            m34 = torch.cat((m3, m4), dim=1)
+            m5 = nn.parallel.data_parallel(self.model5, m34, self.gpu_ids)
+            m6 = nn.parallel.data_parallel(self.model6, m5, self.gpu_ids)
+            m26 = torch.cat((m2, m6), dim=1)
+            m7 = nn.parallel.data_parallel(self.model7, m26, self.gpu_ids)
+            m8 = nn.parallel.data_parallel(self.model8, m7, self.gpu_ids)
+            m18 = torch.cat((m1, m8), dim=1)
+            m9 = nn.parallel.data_parallel(self.model9, m18, self.gpu_ids)
+            out = nn.parallel.data_parallel(self.out_model, m9, self.gpu_ids)
+            return out
+        else:
+            m1 = self.model1(input_pan)
+            c1 = self.color1(input_ms)
+            mc1 = torch.cat((m1, c1), dim=1)
+            m2 = self.model2(mc1)
+            c2 = self.color2(c1)
+            mc2 = torch.cat((m2, c2), dim=1)
+            m3 = self.model3(mc2)
+            c3 = self.color3(c2)
+            mc3 = torch.cat((m3, c3), dim=1)
+            res = self.model_resnet(mc3)
+            m4 = self.model4(res)
+            m34 = torch.cat((m3, m4), dim=1)
+            m5 = self.model5(m34)
+            m6 = self.model6(m5)
+            m26 = torch.cat((m2, m6), dim=1)
+            m7 = self.model7(m26)
+            m8 = self.model8(m7)
+            m18 = torch.cat((m1, m8), dim=1)
+            m9 = self.model9(m18)
+            out = self.out_model(m9)
+            return out
