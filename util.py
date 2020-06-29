@@ -2,6 +2,10 @@ import numpy
 import matplotlib as mpl
 mpl.use('pdf')
 import matplotlib.pyplot as plt
+import torchvision.utils as vutils
+from metrics import sCC
+from metrics import ERGAS as ergas
+from metrics import sam2 as sam
 
 
 def save_figure(losses, path, epoch, label):
