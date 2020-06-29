@@ -8,7 +8,7 @@ from scipy import ndimage
 from util import rgb2gray, scale_range
 
 class PanColorDataset(Dataset):
-    def __init__(self, mode='train', dataset='pleiades', random_downsampling=True):
+    def __init__(self, mode='train', dataset='pleiades', random_downsampling=False):
 
     def __getitem__(self, index):        
         return 0
