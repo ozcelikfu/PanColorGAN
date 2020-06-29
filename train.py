@@ -81,3 +81,15 @@ parser.add_argument('--gpuSet', type=int, default=0)
 opt = parser.parse_args()
 
 print(opt)
+
+if not os.path.exists("results-{}".format(opt.savePath)):
+    os.mkdir("results-{}".format(opt.savePath))
+
+
+f = open('results-{}/psnr.txt'.format(opt.savePath), 'w+')
+F = open("results-{}/params.txt".format(opt.savePath), 'w')
+# F.write(str(opt).split())
+for i in str(opt).split():
+    F.write(i + '\n')
+F.close()
+f.close()
