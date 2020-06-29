@@ -90,7 +90,7 @@ if not os.path.exists("results-{}".format(opt.savePath)):
     os.mkdir("results-{}".format(opt.savePath))
 
 
-f = open('results-{}/psnr.txt'.format(opt.savePath), 'w+')
+f = open('results-{}/metrics.txt'.format(opt.savePath), 'w+')
 F = open("results-{}/params.txt".format(opt.savePath), 'w')
 # F.write(str(opt).split())
 for i in str(opt).split():
@@ -201,6 +201,8 @@ if opt.cuda:
 
 
 def train(epoch):
+    netG.train()
+    netD.train()
 
     for iteration, batch in enumerate(training_data_loader, 1):
 
@@ -330,3 +332,38 @@ def train(epoch):
         np.mean(losses_adv[-len_loader:]))
     losses_recon_epoch.append(
         np.mean(losses_recon[-len_loader:]))
+
+
+def test(epoch):
+    netG.eval()
+    if not os.path.isdir("results-{}/test".format(opt.savePath)):
+        os.mkdir("results-{}/test".format(opt.savePath))
+    avg_sCC = []
+    avg_sam = []
+    avg_ergas = []
+    for it, batch in enumerate(testing_data_loader):
+        input,target= batch[0],batch[1]
+
+        input = input.view(-1, opt.input_nc, 256, 256)
+
+        target = target.cuda().view(-1, opt.output_nc, 256, 256)
+        prediction = netG(input.view(-1, opt.input_nc, 256, 256).cuda())
+
+        sam_val = avg_metric(target, prediction, sam)
+        avg_sam.append(sam_val)
+        sCC_val = avg_metric(target, prediction, sCC)
+        avg_sCC.append(sCC_val)
+        ergas_val = avg_metric(target, prediction, ergas)
+        avg_ergas.append(ergas_val)
+        
+        del input
+        del target
+        del prediction
+        del sCC_val
+        del sam_val
+        del ergas_val
+    res = "===> Avg. SAM: {:.4f} , Avg sCC: {:.4f}, Avg ERGAS: {:.4f}   epoch: {} \n".format(
+        np.mean(avg_psnr), np.std(avg_psnr), np.mean(avg_sam), np.mean(avg_sCC), np.mean(avg_ergas), epoch)
+    f = open('results-{}/metrics.txt'.format(opt.savePath), 'a')
+    f.write(res)
+    print(res)
