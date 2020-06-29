@@ -198,3 +198,135 @@ if opt.cuda:
     criterionMSE = criterionMSE.cuda()
     real_a = real_a.cuda()
     real_b = real_b.cuda()
+
+
+def train(epoch):
+
+    for iteration, batch in enumerate(training_data_loader, 1):
+
+        real_a_cpu, real_b_cpu = batch[0].view(
+            -1, opt.input_nc, 256, 256), batch[1].view(-1, opt.output_nc, 256, 256)
+        real_a.data.resize_(real_a_cpu.size()).copy_(real_a_cpu)
+        real_b.data.resize_(real_b_cpu.size()).copy_(real_b_cpu)
+
+        losses_dict["batchId"]["{}-{}".format(epoch, iteration)] = batch[2]
+
+        fake_b = netG(real_a)
+
+        ############################
+        # (1) Update D network: maximize log(D(x,y)) + log(1 - D(x,G(x)))
+        ###########################
+
+        optimizerD.zero_grad()
+
+        # train with fake
+        fake_ab = torch.cat((real_a, fake_b), 1)
+        pred_fake= netD.forward(fake_ab.detach())
+
+        # train with real
+        real_ab = torch.cat((real_a, real_b), 1)
+        pred_real = netD.forward(real_ab)
+
+        # Relativistic Average GAN Loss or Normal GAN Loss
+        if opt.lossType == 'ragan':
+            loss_d_fake = criterionGAN(
+                pred_fake - torch.mean(pred_real), False)
+            loss_d_real = criterionGAN(pred_real - torch.mean(pred_fake), True)
+        elif opt.lossType == 'gan':
+            loss_d_fake = criterionGAN(pred_fake, False)
+            loss_d_real = criterionGAN(pred_real, True)
+
+        del fake_ab
+        del pred_fake
+        del real_ab
+        del pred_real
+        # Combined loss
+        loss_d = (loss_d_fake + loss_d_real) * 0.5
+
+        loss_d.backward()
+        losses_d.append(loss_d.data.cpu().item())
+        losses_dict["d"]["{}-{}".format(epoch, iteration)
+                         ] = loss_d.data.cpu().item()
+
+        del loss_d_fake
+        del loss_d_real
+        del loss_d
+
+        # Parameter optimizing
+        nn.utils.clip_grad_norm_(netD.parameters(), 0.3)
+        nn.utils.clip_grad_norm_(netG.parameters(), 0.3)
+        optimizerD.step()
+
+        ############################
+        # (2) Update G network: maximize log(D(x,G(x))) + L1(y,G(x))
+        ##########################
+        optimizerG.zero_grad()
+        # First, G(A) should fake the discriminator
+
+        if opt.lossType == 'ragan':
+
+            # train with fake
+            fake_ab = torch.cat((real_a, fake_b), 1)
+            pred_fake = netD.forward(fake_ab)
+
+            # train with real
+            real_ab = torch.cat((real_a, real_b), 1)
+            pred_real = netD.forward(real_ab)
+
+            loss_g_gan = (criterionGAN(pred_real - torch.mean(pred_fake), False) +
+                          criterionGAN(pred_fake - torch.mean(pred_real), True)) / 2
+            
+            del fake_ab
+            del pred_fake
+            del real_ab
+            del pred_real
+        elif opt.lossType == 'gan':
+            fake_ab = torch.cat((real_a, fake_b), 1)
+            pred_fake = netD.forward(fake_ab)
+            loss_g_gan = criterionGAN(pred_fake, True)
+            del fake_ab
+            del pred_fake
+        # Second, G(A) = B
+
+        
+        loss_g_l1 = (criterionL1(fake_b, real_b) ) * opt.lamb
+        loss_g = (loss_g_gan * opt.weightG) + loss_g_l1
+        loss_g.backward()
+        losses_g.append(loss_g.data.cpu().item())
+        losses_adv.append(loss_g_gan.data.cpu().item())
+        losses_recon.append(loss_g_l1.data.cpu().item() * 1 / opt.lamb)
+
+        losses_dict["g"]["{}-{}".format(epoch, iteration)
+                         ] = loss_g.data.cpu().item()
+        losses_dict["adv"]["{}-{}".format(epoch,
+                                          iteration)] = loss_g_gan.data.cpu().item()
+        losses_dict["recon"]["{}-{}".format(epoch, iteration)] = loss_g_l1.data.cpu().item() * 1 / opt.lamb
+
+        del loss_g
+        del loss_g_l1
+        del loss_g_gan
+
+        # Parameter optimizing
+        # nn.utils.clip_grad_norm(netD.parameters(), 0.3)
+        # nn.utils.clip_grad_norm(netG.parameters(), 0.3)
+        optimizerG.step()
+
+        #torch.cuda.synchronize()
+
+        print("===> Epoch[{}]({}/{}): Loss_D: {:.4f} Loss_G: {:.4f}, Loss_Recon: {:.7f} ".format(
+            epoch, iteration, len(training_data_loader), losses_d[-1], losses_g[-1], losses_recon[-1]))
+
+        del fake_b
+
+
+
+    len_loader = len(training_data_loader)
+
+    losses_d_epoch.append(
+        np.mean(losses_d[-len_loader:]))
+    losses_g_epoch.append(
+        np.mean(losses_g[-len_loader:]))
+    losses_adv_epoch.append(
+        np.mean(losses_adv[-len_loader:]))
+    losses_recon_epoch.append(
+        np.mean(losses_recon[-len_loader:]))
