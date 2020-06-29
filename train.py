@@ -77,7 +77,7 @@ parser.add_argument('--contEpoch', type=int,
                     help='contiune from where we left', default=0)
 parser.add_argument("--hddPath", type=str, default='./')
 parser.add_argument("--regTerm", type=float, default=0.0)
-parser.add_argument('--gpuSet', type=int, default=0)
+parser.add_argument('--gpuSet', type=int, default=1)
 opt = parser.parse_args()
 
 print(opt)
@@ -97,3 +97,6 @@ f.close()
 if opt.cuda and not torch.cuda.is_available():
     raise Exception("No GPU found, please run without --cuda")
 cudnn.benchmark = True
+
+gpus = [gpu for gpu in range(opt.gpuSet)]
+torch.cuda.set_device(gpus[0])
