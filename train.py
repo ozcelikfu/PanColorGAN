@@ -165,6 +165,8 @@ if opt.cont:
             if isinstance(v, torch.Tensor):
                 state[k] = v.cuda()
 
+    opt.nEpochs += opt.contEpoch
+
 losses_dict = {"batchId": {}, "d": {}, "g": {},
                    "grad": {}, "recon": {}, "adv": {}}
 
