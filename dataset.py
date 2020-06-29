@@ -8,7 +8,7 @@ from scipy import ndimage
 from util import rgb2gray, scale_range
 
 class PanColorDataset(Dataset):
-    def __init__(self):
+    def __init__(self, mode='train', dataset='pleiades'):
 
     def __getitem__(self, index):        
         return 0
@@ -17,7 +17,7 @@ class PanColorDataset(Dataset):
         return 0
 
 class PanSRDataset(Dataset):
-    def __init__(self):
+    def __init__(self, mode='train', dataset='pleiades'):
 
     def __getitem__(self, index):        
         return 0
@@ -27,7 +27,7 @@ class PanSRDataset(Dataset):
 
 
 class PansharpeningDataset(Dataset):
-    def __init__(self):
+    def __init__(self, mode='train', dataset='pleiades'):
 
     def __getitem__(self, index):        
         return 0
