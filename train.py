@@ -367,3 +367,28 @@ def test(epoch):
     f = open('results-{}/metrics.txt'.format(opt.savePath), 'a')
     f.write(res)
     print(res)
+
+
+def checkpoint(epoch):
+    if opt.hddPath is not None:
+        path = os.path.join(opt.hddPath, "checkpoint")
+    else:
+        path = "checkpoint"
+    if not os.path.exists(path):
+        os.mkdir(path)
+    if not os.path.exists(os.path.join(path, opt.savePath)):
+        os.mkdir(os.path.join(path, opt.savePath))
+    net_g_model_out_path = "{}/{}/netG_model_epoch_{}.pth".format(path,
+                                                                  opt.savePath, epoch)
+    net_d_model_out_path = "{}/{}/netD_model_epoch_{}.pth".format(path,
+                                                                  opt.savePath, epoch)
+    optim_d_model_out_path = "{}/{}/optimD_model_epoch_{}.pth".format(path,
+                                                                      opt.savePath, epoch)
+    optim_g_model_out_path = "{}/{}/optimG_model_epoch_{}.pth".format(path,
+                                                                      opt.savePath, epoch)
+    torch.save(netG.state_dict(), net_g_model_out_path)
+    torch.save(netD.state_dict(), net_d_model_out_path)
+    torch.save(optimizerD.state_dict(), optim_d_model_out_path)
+    torch.save(optimizerG.state_dict(), optim_g_model_out_path)
+
+    print("Checkpoint saved to {}".format(path + opt.savePath))
