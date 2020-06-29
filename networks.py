@@ -326,3 +326,30 @@ class UnetGenerator(nn.Module):
             m9 = self.model9(m18)
             out = self.out_model(m9)
             return out
+
+# Define a resnet block
+class ResnetBlock(nn.Module):
+    def __init__(self, dim, padding_type, norm_layer, use_dropout):
+        super(ResnetBlock, self).__init__()
+        self.conv_block = self.build_conv_block(
+            dim, padding_type, norm_layer, use_dropout)
+
+    def build_conv_block(self, dim, padding_type, norm_layer, use_dropout):
+        conv_block = []
+        p = 0
+        assert(padding_type == 'zero')
+        p = 1
+
+        conv_block += [nn.Conv2d(dim, dim, kernel_size=3, padding=p),
+                       norm_layer(dim, affine=True),
+                       nn.LeakyReLU(0.2, True)]
+        if use_dropout:
+            conv_block += [nn.Dropout(0.2)]
+        conv_block += [nn.Conv2d(dim, dim, kernel_size=3, padding=p),
+                       norm_layer(dim, affine=True)]
+
+        return nn.Sequential(*conv_block)
+
+    def forward(self, x):
+        out = x + self.conv_block(x)
+        return out
