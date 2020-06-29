@@ -167,6 +167,7 @@ if opt.cont:
 
     opt.nEpochs += opt.contEpoch
 
+## Loss Lists Initialization
 losses_dict = {"batchId": {}, "d": {}, "g": {},
                    "grad": {}, "recon": {}, "adv": {}}
 
@@ -181,3 +182,19 @@ losses_adv_epoch = []
 
 losses_g_epoch = []
 losses_d_epoch = []
+
+## Tensors Initialized
+real_a = torch.FloatTensor(opt.batchSize, opt.input_nc, 256, 256)
+real_b = torch.FloatTensor(opt.batchSize, opt.output_nc, 256, 256)
+
+## Switch to CUDA tensors
+if opt.cuda:
+    netD = netD.cuda()
+    netG = netG.cuda()
+    netD.train()
+    netG.train()
+    criterionGAN = criterionGAN.cuda()
+    criterionL1 = criterionL1.cuda()
+    criterionMSE = criterionMSE.cuda()
+    real_a = real_a.cuda()
+    real_b = real_b.cuda()
