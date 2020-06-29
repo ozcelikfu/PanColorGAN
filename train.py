@@ -165,3 +165,17 @@ if opt.cont:
             if isinstance(v, torch.Tensor):
                 state[k] = v.cuda()
 
+losses_dict = {"batchId": {}, "d": {}, "g": {},
+                   "grad": {}, "recon": {}, "adv": {}}
+
+losses_g = []
+losses_d = []
+
+losses_recon = []
+losses_adv = []
+
+losses_recon_epoch = []
+losses_adv_epoch = []
+
+losses_g_epoch = []
+losses_d_epoch = []
