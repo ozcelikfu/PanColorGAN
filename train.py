@@ -140,3 +140,28 @@ optimizerD = optim.Adam(netD.parameters(), lr=opt.lr, betas=(
     opt.beta1, 0.999), weight_decay=opt.regTerm)
 
 ## Continue from a checkpoint
+
+if opt.cont:
+    ## Load Networks
+    netG.load_state_dict(torch.load(
+        'checkpoint/{}/netG_model_epoch_{}.pth'.format(opt.savePath, opt.contEpoch),
+        map_location=lambda storage, loc: storage))
+    netD.load_state_dict(torch.load(
+        'checkpoint/{}/netD_model_epoch_{}.pth'.format(opt.savePath, opt.contEpoch),
+        map_location=lambda storage, loc: storage))
+
+    ## Load Optimizers
+    optimizerG.load_state_dict(
+        torch.load('{}checkpoint/{}/optimG_model_epoch_{}.pth'.format(opt.hddPath, opt.savePath, opt.contEpoch), map_location=lambda storage, loc: storage))
+    for state in optimizerG.state.values():
+        for k, v in state.items():
+            if isinstance(v, torch.Tensor):
+                state[k] = v.cuda()
+
+    optimizerD.load_state_dict(
+        torch.load('{}checkpoint/{}/optimD_model_epoch_{}.pth'.format(opt.hddPath, opt.savePath, opt.contEpoch), map_location=lambda storage, loc: storage))
+    for state in optimizerD.state.values():
+        for k, v in state.items():
+            if isinstance(v, torch.Tensor):
+                state[k] = v.cuda()
+
