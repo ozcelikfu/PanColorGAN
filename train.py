@@ -119,3 +119,11 @@ training_data_loader = DataLoader(
     dataset=train_set, num_workers=opt.threads, batch_size=opt.batchSize, shuffle=True)
 testing_data_loader = DataLoader(
     dataset=test_set,num_workers=opt.threads, batch_size=opt.batchSize, shuffle=False)
+
+
+## Start from beginning or continue from a checkpoint
+
+netG = define_G(opt.input_nc, opt.output_nc,
+                    opt.ngf, 'batch','leakyrelu', opt.useDropout, opt.upConvType, opt.gtype, opt.blockType, opt.nblocks, gpus, n_downsampling=opt.ndowns)
+netD = define_D(opt.input_nc + opt.output_nc,
+                    opt.ndf, 'batch', not opt.lsgan, opt.nlayers, gpus)
