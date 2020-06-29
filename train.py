@@ -28,6 +28,8 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 parser = argparse.ArgumentParser(description='PanColorGAN-PyTorch-implementation')
 #parser.add_argument('--datasetSource', required=True, help='path of dataset')
 #parser.add_argument('--datasetTarget', required=False, help='path of dataset')
+parser.add_argument('--dataPath', help='path of data')
+parser.add_argument('--dataset', type=str, default='pleiades')
 parser.add_argument('--savePath', required=True, help='path of save')
 parser.add_argument('--batchSize', type=int, default=16,
                     help='training batch size')
@@ -35,6 +37,8 @@ parser.add_argument('--testBatchSize', type=int,
                     default=16, help='testing batch size')
 parser.add_argument('--nEpochs', type=int, default=200,
                     help='number of epochs to train for')
+parser.add_argument('--model', type=str, default='PanColorGAN')
+parser.add_argument("--useRD", action='store_true')
 parser.add_argument('--input_nc', type=int, default=5,
                     help='input image channels')
 parser.add_argument('--output_nc', type=int, default=4,
@@ -100,3 +104,15 @@ cudnn.benchmark = True
 
 gpus = [gpu for gpu in range(opt.gpuSet)]
 torch.cuda.set_device(gpus[0])
+
+if opt.model == 'PanColorGAN':
+    train_set = PanColorDataset(mode='train', dataset=opt.dataset, random_downsampling=opt.useRD)
+    test_set = PanColorDataset(mode='test', dataset=opt.dataset)
+elif opt.model == 'PanSRGAN':
+    train_set = PanSRDataset(mode='train', dataset=opt.dataset)
+    test_set = PanSRDataset(mode='test', dataset=opt.dataset)
+
+training_data_loader = DataLoader(
+    dataset=train_set, num_workers=opt.threads, batch_size=opt.batchSize, shuffle=True)
+testing_data_loader = DataLoader(
+    dataset=test_set,num_workers=opt.threads, batch_size=opt.batchSize, shuffle=False)
