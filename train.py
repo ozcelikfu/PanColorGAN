@@ -33,10 +33,10 @@ parser.add_argument('--dataset', type=str, default='pleiades')
 parser.add_argument('--savePath', required=True, help='path of save')
 parser.add_argument('--batchSize', type=int, default=16,
                     help='training batch size')
-parser.add_argument('--testBatchSize', type=int,
-                    default=16, help='testing batch size')
 parser.add_argument('--nEpochs', type=int, default=200,
                     help='number of epochs to train for')
+parser.add_argument('--testEveryNEpochs', type=int, default=2,
+                    help='Test every n epochs')
 parser.add_argument('--model', type=str, default='PanColorGAN')
 parser.add_argument("--useRD", action='store_true')
 parser.add_argument('--input_nc', type=int, default=5,
@@ -392,3 +392,14 @@ def checkpoint(epoch):
     torch.save(optimizerG.state_dict(), optim_g_model_out_path)
 
     print("Checkpoint saved to {}".format(path + opt.savePath))
+
+
+for epoch in range(opt.contEpoch, opt.nEpochs + 1):
+    train(epoch)
+    if epoch % opt.testEveryNEpochs == 0:
+        checkpoint(epoch)
+        print('===> Testing')
+        test(epoch)
+    np.savez("results-{}/losses".format(opt.savePath), np.array(losses_dict))
+
+f.close()
