@@ -92,8 +92,6 @@ def define_G(input_nc, output_nc, ngf, norm='batch', activation='leakyrelu', use
                                 gpu_ids=gpu_ids, n_downsampling=3)
 
 
-    else:
-        raise NotImplementedError
     if len(gpu_ids) > 0:
         netG.cuda()
     netG.apply(weights_init)
