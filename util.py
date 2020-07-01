@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import matplotlib as mpl
 mpl.use('pdf')
 import matplotlib.pyplot as plt
