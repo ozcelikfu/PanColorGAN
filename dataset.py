@@ -105,6 +105,7 @@ class PanSRDataset(Dataset):
 
 class PansharpeningDataset(Dataset):
     def __init__(self, mode='train', dataset='pleiades'):
+        pass
 
     def __getitem__(self, index):        
         return 0
