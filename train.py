@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from networks import define_G, define_D, GANLoss, print_network, get_conv, edge_loss
+from networks import define_G, define_D, GANLoss, print_network, get_conv
 from dataset import PanColorDataset, PanSRDataset
 import torch.backends.cudnn as cudnn
 from util import save_figure, visualize_tensor, avg_metric
