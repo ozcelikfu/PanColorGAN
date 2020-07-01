@@ -27,13 +27,13 @@ class PanColorDataset(Dataset):
         ms_orig = np.load('./dataset/new_npy/msimage_{}.npy'.format(filename))
         #pan_orig = np.load('./dataset/new_npy/panimage_{}.npy'.format(filename))
 
-        gray_ms = self.rgb2gray(ms_orig)
+        gray_ms = rgb2gray(ms_orig)
 
         ms_orig = ms_orig.astype(np.float32)
         gray_ms = gray_ms.astype(np.float32)
 
-        ms_norm = np.array([self.scale_range(i, -1, 1) for i in ms_orig.transpose((2,0,1))])
-        gray_ms_norm = self.scale_range(gray_ms, -1, 1)
+        ms_norm = np.array([scale_range(i, -1, 1) for i in ms_orig.transpose((2,0,1))])
+        gray_ms_norm = scale_range(gray_ms, -1, 1)
 
         ms_down = [resize(i,(64,64), 3) for i in ms_norm]
         ms_up = [resize(i, (256, 256), 3) for i in ms_down]
@@ -78,8 +78,8 @@ class PanSRDataset(Dataset):
         ms_orig = ms_orig.astype(np.float32)
         pan_orig = pan_orig.astype(np.float32)
 
-        ms_norm = np.array([self.scale_range(i, -1, 1) for i in ms_orig.transpose((2,0,1))])
-        pan_norm = self.scale_range(pan_orig, -1, 1)
+        ms_norm = np.array([scale_range(i, -1, 1) for i in ms_orig.transpose((2,0,1))])
+        pan_norm = scale_range(pan_orig, -1, 1)
 
         ms_down = [resize(i,(64,64), 3) for i in ms_norm]
         ms_up = [resize(i, (256, 256), 3) for i in ms_down]
