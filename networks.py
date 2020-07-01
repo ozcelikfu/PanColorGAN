@@ -273,13 +273,10 @@ class UnetGenerator(nn.Module):
         self.out_model = nn.Sequential(*out_model)
 
     def forward(self, input):
-        #self.gpu_ids = None
-        self.gpu_ids = [0]
-        # print self.gpu_ids
-        #input_pan, input_ms = input[:, 4, :,
-        #                      :].unsqueeze(1), input[:, :4, :, :]
-        input_pan, input_ms = input[:, 3, :,
-                              :].unsqueeze(1), input[:, :3, :, :]
+
+        input_pan, input_ms = input[:, 4, :,
+                              :].unsqueeze(1), input[:, :4, :, :]
+
         if self.gpu_ids and isinstance(input.data, torch.cuda.FloatTensor):
             m1 = nn.parallel.data_parallel(self.model1, input_pan, self.gpu_ids)
             c1 = nn.parallel.data_parallel(self.color1, input_ms, self.gpu_ids)
