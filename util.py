@@ -66,3 +66,19 @@ def show_image(im):
     plt.figure(figsize=(16, 16), dpi= 80, facecolor='w', edgecolor='k')
     plt.imshow(im)
     plt.show()
+
+def patch_sixteen(images):
+    size = images.shape[-1]
+    patched = np.zeros((images.shape[1],images.shape[2] * 4, images.shape[3] * 4))
+    for i in range(4):
+        for j in range(4):
+            patched[..., i * size:(i + 1) * size, j * size:(j + 1) * size] += images[i*4+j]
+    return np.array(patched)
+
+def divide_sixteen(image):
+    size = image.shape[-1]/4
+    divided = []
+    for i in range(4):
+        for j in range(4):
+            divided += image[...,int(i*size):int((i+1)*size),int(j*size):int((j+1)*size)],
+    return np.array(divided)
