@@ -53,3 +53,16 @@ def avg_metric(target, prediction, metric):
         sum += metric(np.transpose(target.data.cpu().numpy()
                                    [i], (1, 2, 0)), np.transpose(prediction.data.cpu().numpy()[i], (1, 2, 0)))
     return sum/batch_size
+
+def show_image(im):
+  if len(im.shape) == 2:
+    im = scale_range(im, 0, 255).astype(np.uint8)
+    plt.figure(figsize=(16, 16), dpi= 80, facecolor='w', edgecolor='k')
+    plt.imshow(im,cmap='gray')
+    plt.show()
+
+  elif len(im.shape) == 3:
+    im = np.array([scale_range(i, 0, 255) for i in im.transpose((2,0,1))]).transpose(1,2,0)[...,:3].astype(np.uint8)
+    plt.figure(figsize=(16, 16), dpi= 80, facecolor='w', edgecolor='k')
+    plt.imshow(im)
+    plt.show()
