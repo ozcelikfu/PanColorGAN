@@ -10,4 +10,4 @@ Code is based on mrzhu-cool/pix2pix-pytorch [Github Link](https://github.com/mrz
 
 Metrics code are adapted from different image quality assesment repos such as **sewar**
 
-Google Colab Notebook for Pansharpening Demo [Colab](https://drive.google.com/file/d/1N5lvyHLSbhbCOVmCtz5LL_9oGKuN1OUu/view?usp=sharing)
+Google Colab Notebook for Pansharpening Demo [Colab](https://colab.research.google.com/drive/1N5lvyHLSbhbCOVmCtz5LL_9oGKuN1OUu)
