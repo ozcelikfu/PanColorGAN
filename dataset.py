@@ -35,7 +35,11 @@ class PanColorDataset(Dataset):
         ms_norm = np.array([scale_range(i, -1, 1) for i in ms_orig.transpose((2,0,1))])
         gray_ms_norm = scale_range(gray_ms, -1, 1)
 
-        ms_down = [resize(i,(64,64), 3) for i in ms_norm]
+        if self.random_downsampling:
+            reduce_size = np.random.randint(20, 80)
+        else:
+            reduce_size = 64
+        ms_down = [resize(i,(reduce_size,reduce_size), 3) for i in ms_norm]
         ms_up = [resize(i, (256, 256), 3) for i in ms_down]
 
         ms_up = np.clip(ms_up,-1.0,1.0)
