@@ -146,9 +146,9 @@ class GANLoss(nn.Module):
                 #    real_tensor, requires_grad=False)
                 self.real_label_var = real_tensor
                 target_tensor = self.real_label_var
-            else:
-            	create_label = ((self.fake_label_var is None) or
-                            (self.fake_label_var.numel() != input.numel()))
+        else:
+            create_label = ((self.fake_label_var is None) or
+                        (self.fake_label_var.numel() != input.numel()))
             if create_label:
                 fake_tensor = self.Tensor(input.size()).fill_(self.fake_label)
                 # self.fake_label_var = Variable(
